@@ -1,0 +1,6 @@
+@EstateAccessManagement.API_HostAddress = http://localhost:5015
+
+GET {{EstateAccessManagement.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
