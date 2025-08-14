@@ -1,0 +1,48 @@
+services:
+  eam-api:
+    container_name: eam-api
+    build:
+      context: .
+      dockerfile: src/EstateAccessManagement.API/Dockerfile
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - eam-db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=${APP_DB_HOST};Port=${APP_DB_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - eam_network
+
+  eam-db:
+    container_name: eam-db
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:  
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} 
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - eam_network
+
+volumes:
+  pgdata:
+
+networks:
+  eam_network:
+    driver: bridge 
