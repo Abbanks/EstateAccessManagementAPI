@@ -1,5 +1,5 @@
-
 using Microsoft.OpenApi.Models;
+using EstateAccessManagement.Infrastructure;
 
 namespace EstateAccessManagement.API
 {
@@ -10,6 +10,7 @@ namespace EstateAccessManagement.API
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+            builder.Services.AddInfrastructureServices(builder.Configuration);
             builder.Services.AddHealthChecks();
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
