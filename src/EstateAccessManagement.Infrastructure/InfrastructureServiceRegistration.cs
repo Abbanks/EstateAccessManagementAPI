@@ -12,6 +12,11 @@ namespace EstateAccessManagement.Infrastructure
                 options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),
                     b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
 
+            // Ensure you have referenced Microsoft.AspNetCore.Identity.EntityFrameworkCore NuGet package
+            //services.AddIdentity<AppUser, IdentityRole<Guid>>()
+            //    .AddEntityFrameworkStores<ApplicationDbContext>()
+            //    .AddDefaultTokenProviders();
+
             return services;
         }
     }

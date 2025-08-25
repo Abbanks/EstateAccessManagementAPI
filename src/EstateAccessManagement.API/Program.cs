@@ -1,5 +1,7 @@
-using Microsoft.OpenApi.Models;
 using EstateAccessManagement.Infrastructure;
+using EstateAccessManagement.Application;
+using Microsoft.OpenApi.Models;
+using Serilog;
 
 namespace EstateAccessManagement.API
 {
@@ -9,10 +11,15 @@ namespace EstateAccessManagement.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Host.UseSerilog((context, loggerConfig) =>
+               loggerConfig.ReadFrom.Configuration(context.Configuration));
+
             // Add services to the container.
-            builder.Services.AddInfrastructureServices(builder.Configuration);
-            builder.Services.AddHealthChecks();
-            builder.Services.AddControllers();
+            builder.Services.AddControllers(options =>
+            {
+              //  options.Filters.Add<ApiExceptionFilter>();
+            });
+
             builder.Services.AddOpenApi();
             builder.Services.AddSwaggerGen(options =>
             {
@@ -23,6 +30,10 @@ namespace EstateAccessManagement.API
                     Description = "API for managing residential estate access control",
                 });
             });
+
+            builder.Services.AddInfrastructureServices(builder.Configuration);
+            builder.Services.AddApplicationServices();
+            builder.Services.AddControllers();
 
             var app = builder.Build();
 
@@ -43,6 +54,7 @@ namespace EstateAccessManagement.API
             app.UseAuthorization();
             app.MapControllers();
             app.MapHealthChecks("/health");
+            app.UseSerilogRequestLogging();
 
             app.Run();
         }
