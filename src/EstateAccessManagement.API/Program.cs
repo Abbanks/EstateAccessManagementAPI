@@ -1,5 +1,6 @@
-using EstateAccessManagement.Infrastructure;
+using EstateAccessManagement.API.Filters;
 using EstateAccessManagement.Application;
+using EstateAccessManagement.Infrastructure;
 using Microsoft.OpenApi.Models;
 using Serilog;
 
@@ -7,7 +8,7 @@ namespace EstateAccessManagement.API
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -17,10 +18,11 @@ namespace EstateAccessManagement.API
             // Add services to the container.
             builder.Services.AddControllers(options =>
             {
-              //  options.Filters.Add<ApiExceptionFilter>();
+               options.Filters.Add<ApiExceptionFilter>();
             });
 
-            builder.Services.AddOpenApi();
+            builder.Services.AddHealthChecks();
+            builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {
                 options.SwaggerDoc("v1", new OpenApiInfo
@@ -31,11 +33,11 @@ namespace EstateAccessManagement.API
                 });
             });
 
-            builder.Services.AddInfrastructureServices(builder.Configuration);
             builder.Services.AddApplicationServices();
-            builder.Services.AddControllers();
+            builder.Services.AddInfrastructureServices(builder.Configuration);
 
             var app = builder.Build();
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -50,11 +52,12 @@ namespace EstateAccessManagement.API
                 });
             }
 
-            app.UseHttpsRedirection();
-            app.UseAuthorization();
-            app.MapControllers();
             app.MapHealthChecks("/health");
+            app.UseHttpsRedirection();
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.UseSerilogRequestLogging();
+            app.MapControllers();
 
             app.Run();
         }
