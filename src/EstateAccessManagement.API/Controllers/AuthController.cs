@@ -1,21 +1,21 @@
 ﻿using EstateAccessManagement.Application.Commands.Users;
 using EstateAccessManagement.Application.DTOs;
-using EstateAccessManagement.Application.Queries.Users;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EstateAccessManagement.API.Controllers
 {
-    [Route("api/v1/users")]
+    [Route("api/v1/[controller]")]
     [ApiController]
-    public class UserController(IMediator mediator) : ControllerBase
+    public class AuthController(IMediator mediator) : ControllerBase
     {
         [HttpPost]
         [Authorize(Roles = "Admin")] 
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)
         {
             var command = new RegisterUserCommand
@@ -34,10 +34,11 @@ namespace EstateAccessManagement.API.Controllers
         [HttpPost("login")]
         [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var query = new LoginUserQuery
+            var query = new LoginUserCommand
             {
                 Email = request.Email,
                 Password = request.Password
