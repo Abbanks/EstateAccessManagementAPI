@@ -14,9 +14,12 @@ namespace EstateAccessManagement.Infrastructure
             using var scope = serviceProvider.CreateScope();
             var scopedServices = scope.ServiceProvider;
 
+            var loggerFactory = scopedServices.GetRequiredService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger("SeedData");
             var userManager = scopedServices.GetRequiredService<UserManager<AppUser>>();
             var roleManager = scopedServices.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-            var logger = scopedServices.GetRequiredService<ILogger>();
+
+            logger.LogInformation("Seeding database started...");
 
             const string adminRole = "Admin";
             var adminEmail = configuration["AdminUser:Email"];
@@ -52,8 +55,7 @@ namespace EstateAccessManagement.Infrastructure
                     LastName = "Admin",
                     UserName = adminEmail,
                     Email = adminEmail,
-                    UserType = UserType.Admin,
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword)
+                    UserType = UserType.Admin
                 };
 
                 var result = await userManager.CreateAsync(adminUser, adminPassword);

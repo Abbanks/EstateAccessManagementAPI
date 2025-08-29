@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EstateAccessManagement.Infrastructure;
 
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) 
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
 : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options)
 {
     public DbSet<AccessCode> AccessCodes { get; set; }

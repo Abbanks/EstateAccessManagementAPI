@@ -11,7 +11,7 @@ namespace EstateAccessManagement.API.Controllers
     public class AuthController(IMediator mediator) : ControllerBase
     {
         [HttpPost]
-        [Authorize(Roles = "Admin")] 
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
