@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace EstateAccessManagement.Application.Validators
 {
-    public class RegisterUserRequestValidator: AbstractValidator<RegisterUserRequest>
+    public class RegisterUserRequestValidator : AbstractValidator<RegisterUserRequest>
     {
         public RegisterUserRequestValidator()
         {
