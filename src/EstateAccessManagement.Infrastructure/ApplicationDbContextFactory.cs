@@ -9,7 +9,7 @@ namespace EstateAccessManagement.Infrastructure
         public ApplicationDbContext CreateDbContext(string[] args)
         {
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
-            var basePath = Path.Combine(Directory.GetCurrentDirectory(), "../EstateAccessManagement.Api");
+            var basePath = Path.Combine(Directory.GetCurrentDirectory(), "../EstateAccessManagement.API");
 
             IConfigurationRoot configuration = new ConfigurationBuilder()
                 .SetBasePath(basePath)

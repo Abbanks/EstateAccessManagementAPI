@@ -22,5 +22,45 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(u => u.ModifiedAt).IsRequired();
             entity.Property(u => u.IsDeprecated).IsRequired();
         });
+
+        builder.Entity<AccessCode>(entity =>
+        {
+            entity.HasKey(ac => ac.Id);
+
+            entity.Property(ac => ac.CodeHash)
+                .IsRequired()
+                .HasMaxLength(64);
+
+            entity.Property(ac => ac.ResidentId)
+                .IsRequired();
+
+            entity.Property(ac => ac.CodeType)
+                .IsRequired();
+
+            entity.Property(ac => ac.ExpiresAt)
+                .IsRequired();
+
+            entity.Property(ac => ac.CreatedAt)
+                .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+
+            entity.Property(ac => ac.IsActive)
+                .HasDefaultValue(true);
+
+            entity.Property(ac => ac.IsDeprecated)
+                .HasDefaultValue(false);
+
+            entity.Property(ac => ac.CurrentUses)
+                .HasDefaultValue(0);
+
+            entity.HasIndex(ac => ac.CodeHash);
+            entity.HasIndex(ac => ac.ResidentId);
+            entity.HasIndex(ac => ac.IsActive);
+            entity.HasIndex(ac => ac.ExpiresAt);
+
+            entity.HasOne(ac => ac.Resident)
+                .WithMany() 
+                .HasForeignKey(ac => ac.ResidentId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }

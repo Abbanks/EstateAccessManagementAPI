@@ -1,12 +1,11 @@
-﻿using EstateAccessManagement.Application.Commands.Users;
-using EstateAccessManagement.Application.DTOs;
+﻿using EstateAccessManagement.Application.DTOs;
 using EstateAccessManagement.Core.Entities;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 
-namespace EstateAccessManagement.Application.Handlers
+namespace EstateAccessManagement.Application.Features.Users.Commands
 {
     public class RegisterUserHandler(UserManager<AppUser> userManager, ILogger<RegisterUserHandler> logger)
     : IRequestHandler<RegisterUserCommand, RegisterUserResponse>

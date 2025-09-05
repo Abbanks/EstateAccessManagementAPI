@@ -1,0 +1,151 @@
+﻿using EstateAccessManagement.Infrastructure.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using EstateAccessManagement.Core.Entities;
+using EstateAccessManagement.Core.Enums;
+
+namespace EstateAccessManagement.Infrastructure.Tests;
+
+public class AccessCodeServiceTests
+{
+    private readonly ApplicationDbContext _dbContext;
+    private readonly AccessCodeService _accessCodeService;
+    private readonly Mock<ILogger<AccessCodeService>> _loggerMock;
+
+    public AccessCodeServiceTests()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        _dbContext = new ApplicationDbContext(options);
+
+        _loggerMock = new Mock<ILogger<AccessCodeService>>();
+
+        _accessCodeService = new AccessCodeService(_loggerMock.Object, _dbContext);
+    }
+
+    [Fact]
+    public async Task GenerateAccessCodeAsync_ShouldCreateAndReturnCode_ForValidResidentIdAndType()
+    {
+        var residentId = Guid.NewGuid();
+        var codeType = AccessCodeType.LongStayVisitor;
+
+        var result = await _accessCodeService.GenerateAccessCodeAsync(residentId, codeType);
+
+        Assert.NotNull(result);
+        Assert.NotEqual(Guid.Empty, result.Id);
+        Assert.Equal(residentId, result.ResidentId);
+        Assert.Equal(codeType, result.CodeType);
+        Assert.Equal(1, _dbContext.AccessCodes.Count());
+        var savedCode = await _dbContext.AccessCodes.FirstAsync();
+        Assert.Equal(result.Id, savedCode.Id);
+    }
+
+    [Fact]
+    public async Task ValidateAccessCodeAsync_ShouldReturnFalse_ForExpiredCode()
+    {
+        // Arrange
+        var residentId = Guid.NewGuid();
+        var rawCode = "EXPIREDCODE";
+        var hashedCode = AccessCodeService.HashCode(rawCode);
+
+        var accessCode = new AccessCode
+        {
+            Id = Guid.NewGuid(),
+            ResidentId = residentId,
+            CodeHash = hashedCode,
+            CreatedAt = DateTime.UtcNow.AddHours(-2),
+            ExpiresAt = DateTime.UtcNow.AddHours(-1),
+            MaxUses = 1,
+            CurrentUses = 0,
+            IsActive = true,
+            CodeType = AccessCodeType.TemporaryVisitor
+        };
+        _dbContext.AccessCodes.Add(accessCode);
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _accessCodeService.ValidateAccessCodeAsync(rawCode);
+
+        Assert.False(result.IsValid);
+        Assert.Equal("Access code has expired.", result.Message);
+        Assert.Equal(accessCode.Id, result.AccessCodeId);
+        Assert.Equal(accessCode.ResidentId, result.ResidentId);
+
+        var updatedCode = await _dbContext.AccessCodes.FindAsync(accessCode.Id);
+        Assert.False(updatedCode!.IsActive);
+    }
+
+    [Fact]
+    public async Task ValidateAccessCodeAsync_ShouldReturnFalse_ForExhaustedCode()
+    {
+        var residentId = Guid.NewGuid();
+        var rawCode = "EXHAUSTEDCODE";
+        var hashedCode = AccessCodeService.HashCode(rawCode);
+
+        var accessCode = new AccessCode
+        {
+            Id = Guid.NewGuid(),
+            ResidentId = residentId,
+            CodeHash = hashedCode,
+            CreatedAt = DateTime.UtcNow.AddHours(-2),
+            ExpiresAt = DateTime.UtcNow.AddHours(1),
+            MaxUses = 1,
+            CurrentUses = 1, 
+            IsActive = true,
+            CodeType = AccessCodeType.TemporaryVisitor
+        };
+        _dbContext.AccessCodes.Add(accessCode);
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _accessCodeService.ValidateAccessCodeAsync(rawCode);
+
+        Assert.False(result.IsValid);
+        Assert.Equal("Access code has reached its maximum number of uses.", result.Message);
+        Assert.Equal(accessCode.Id, result.AccessCodeId);
+        Assert.Equal(accessCode.ResidentId, result.ResidentId);
+
+        var updatedCode = await _dbContext.AccessCodes.FindAsync(accessCode.Id);
+        Assert.False(updatedCode!.IsActive);
+    }
+
+    [Fact]
+    public async Task ValidateAccessCodeAsync_ShouldReturnFalse_ForNonexistentCode()
+    {
+        var result = await _accessCodeService.ValidateAccessCodeAsync("NONEXISTENT");
+
+        Assert.False(result.IsValid);
+        Assert.Equal("Access code not found or inactive.", result.Message);
+        Assert.Null(result.AccessCodeId);
+        Assert.Null(result.ResidentId);
+    }
+
+    [Fact]
+    public async Task ValidateAccessCodeAsync_ShouldReturnFalse_ForInactiveCode()
+    {
+        var rawCode = "INACTIVECODE";
+        var hashedCode = AccessCodeService.HashCode(rawCode);
+
+        var accessCode = new AccessCode
+        {
+            Id = Guid.NewGuid(),
+            ResidentId = Guid.NewGuid(),
+            CodeHash = hashedCode,
+            CreatedAt = DateTime.UtcNow.AddHours(-2),
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+            MaxUses = null,
+            CurrentUses = 0,
+            IsActive = false, 
+            CodeType = AccessCodeType.LongStayVisitor
+        };
+        _dbContext.AccessCodes.Add(accessCode);
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _accessCodeService.ValidateAccessCodeAsync(rawCode);
+
+        Assert.False(result.IsValid);
+        Assert.Equal("Access code not found or inactive.", result.Message);
+        Assert.Null(result.AccessCodeId);
+        Assert.Null(result.ResidentId);
+    }
+}

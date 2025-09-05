@@ -1,6 +1,6 @@
 ﻿using EstateAccessManagement.Core.Entities;
 
-namespace EstateAccessManagement.Application.Services
+namespace EstateAccessManagement.Application.Interfaces
 {
     public interface IAuthService
     {

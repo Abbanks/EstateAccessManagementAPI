@@ -1,12 +1,11 @@
-﻿using EstateAccessManagement.Application.Commands.Users;
-using EstateAccessManagement.Application.DTOs;
-using EstateAccessManagement.Application.Services;
+﻿using EstateAccessManagement.Application.DTOs;
+using EstateAccessManagement.Application.Interfaces;
 using EstateAccessManagement.Core.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 
-namespace EstateAccessManagement.Application.Handlers
+namespace EstateAccessManagement.Application.Features.Users.Commands
 {
     public class LoginUserHandler(UserManager<AppUser> userManager, ILogger<LoginUserHandler> logger, IAuthService authService)
     : IRequestHandler<LoginUserCommand, LoginUserResponse>

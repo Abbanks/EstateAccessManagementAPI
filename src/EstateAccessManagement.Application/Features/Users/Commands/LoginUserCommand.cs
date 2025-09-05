@@ -1,7 +1,7 @@
 ﻿using EstateAccessManagement.Application.DTOs;
 using MediatR;
 
-namespace EstateAccessManagement.Application.Commands.Users
+namespace EstateAccessManagement.Application.Features.Users.Commands
 {
     public class LoginUserCommand : IRequest<LoginUserResponse>
     {

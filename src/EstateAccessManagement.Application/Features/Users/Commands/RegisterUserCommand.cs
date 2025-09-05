@@ -2,7 +2,7 @@
 using EstateAccessManagement.Core.Enums;
 using MediatR;
 
-namespace EstateAccessManagement.Application.Commands.Users
+namespace EstateAccessManagement.Application.Features.Users.Commands
 {
     public class RegisterUserCommand : IRequest<RegisterUserResponse>
     {

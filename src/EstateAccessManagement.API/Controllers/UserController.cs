@@ -1,5 +1,5 @@
-﻿using EstateAccessManagement.Application.Commands.Users;
-using EstateAccessManagement.Application.DTOs;
+﻿using EstateAccessManagement.Application.DTOs;
+using EstateAccessManagement.Application.Features.Users.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +8,7 @@ namespace EstateAccessManagement.API.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    public class AuthController(IMediator mediator) : ControllerBase
+    public class UserController(IMediator mediator) : ControllerBase
     {
         [HttpPost]
         [Authorize(Roles = "Admin")]

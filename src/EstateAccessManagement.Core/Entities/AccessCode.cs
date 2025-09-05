@@ -5,11 +5,11 @@ namespace EstateAccessManagement.Core.Entities
 {
     public class AccessCode
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public Guid Id { get; set; }
 
         [Required]
-        [MaxLength(6)]
-        public string Code { get; set; } = string.Empty;
+        [MaxLength(8)]
+        public string CodeHash { get; set; } 
 
         [Required]
         public Guid ResidentId { get; set; }
@@ -18,17 +18,17 @@ namespace EstateAccessManagement.Core.Entities
         public AccessCodeType CodeType { get; set; }
 
         [Required]
-        public DateTime ExpiresAt { get; private set; }
+        public DateTime ExpiresAt { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; }
         public bool IsDeprecated { get; set; }
 
-        public bool IsActive { get; set; } = true;
+        public bool IsActive { get; set; }
 
-        public int? MaxUses { get; private set; }
+        public int? MaxUses { get; set; }
 
-        public int CurrentUses { get; set; } = 0;
+        public int CurrentUses { get; set; } 
 
-        public AppUser Resident { get; set; } = null!;
+        public AppUser Resident { get; set; }
     }
 }
