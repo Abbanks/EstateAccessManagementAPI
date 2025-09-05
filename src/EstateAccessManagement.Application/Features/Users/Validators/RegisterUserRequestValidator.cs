@@ -1,7 +1,7 @@
 ﻿using EstateAccessManagement.Application.DTOs;
 using FluentValidation;
 
-namespace EstateAccessManagement.Application.Validators
+namespace EstateAccessManagement.Application.Features.Users.Validators
 {
     public class RegisterUserRequestValidator : AbstractValidator<RegisterUserRequest>
     {

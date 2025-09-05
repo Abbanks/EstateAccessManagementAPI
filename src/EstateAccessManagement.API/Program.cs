@@ -1,6 +1,7 @@
 using EstateAccessManagement.API.Filters;
 using EstateAccessManagement.Application;
 using EstateAccessManagement.Infrastructure;
+using Microsoft.OpenApi.Models;
 
 namespace EstateAccessManagement.API
 {
@@ -16,10 +17,47 @@ namespace EstateAccessManagement.API
             {
                 options.Filters.Add<ApiExceptionFilter>();
             });
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                // This is where you configure Swagger/OpenAPI.
+                // Add the security definition for Bearer tokens here.
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "EstateAccessManagement API", Version = "v1" });
+
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer"
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                });
+            });
             builder.Services.AddHealthChecks();
             builder.Services.AddOpenApi();
+            builder.Services.AddHttpContextAccessor();
             builder.Services.AddApplicationServices();
             builder.Services.AddInfrastructureServices(builder.Configuration);
+            builder.Services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssembly(typeof(ApplicationServiceRegistration).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(InfrastructureServiceRegistration).Assembly);
+            });
             builder.Services.AddAuthorization();
 
             var app = builder.Build();

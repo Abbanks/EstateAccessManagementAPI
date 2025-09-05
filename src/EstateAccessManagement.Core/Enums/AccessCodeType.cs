@@ -1,9 +1,13 @@
-﻿namespace EstateAccessManagement.Core.Enums
+﻿using System.ComponentModel;
+
+namespace EstateAccessManagement.Core.Enums
 {
     public enum AccessCodeType
     {
+        None,
+        [Description("TemporaryVisitor")]
         TemporaryVisitor,
-        LongStayVisitor,
-        OneTime
+        [Description("LongStayVisitor")]
+        LongStayVisitor
     }
 }

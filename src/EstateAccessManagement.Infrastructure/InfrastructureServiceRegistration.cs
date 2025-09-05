@@ -1,4 +1,4 @@
-﻿using EstateAccessManagement.Application.Services;
+﻿using EstateAccessManagement.Application.Interfaces;
 using EstateAccessManagement.Core.Entities;
 using EstateAccessManagement.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -20,6 +20,7 @@ namespace EstateAccessManagement.Infrastructure
                     b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
 
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IAccessCodeService, AccessCodeService>();
 
             services.AddIdentityCore<AppUser>(options =>
             {
