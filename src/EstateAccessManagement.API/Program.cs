@@ -1,4 +1,4 @@
-using EstateAccessManagement.API.Filters;
+using EstateAccessManagement.API.Handlers;
 using EstateAccessManagement.Application;
 using EstateAccessManagement.Infrastructure;
 using Microsoft.OpenApi.Models;
@@ -13,15 +13,10 @@ namespace EstateAccessManagement.API
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-            builder.Services.AddControllers(options =>
-            {
-                options.Filters.Add<ApiExceptionFilter>();
-            });
+            builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
-                // This is where you configure Swagger/OpenAPI.
-                // Add the security definition for Bearer tokens here.
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "EstateAccessManagement API", Version = "v1" });
 
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -30,7 +25,7 @@ namespace EstateAccessManagement.API
                     Name = "Authorization",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.Http,
-                    Scheme = "bearer"
+                    Scheme = "Bearer"
                 });
 
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -59,6 +54,8 @@ namespace EstateAccessManagement.API
                 cfg.RegisterServicesFromAssembly(typeof(InfrastructureServiceRegistration).Assembly);
             });
             builder.Services.AddAuthorization();
+            builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+            builder.Services.AddProblemDetails();
 
             var app = builder.Build();
 
@@ -91,6 +88,7 @@ namespace EstateAccessManagement.API
                 });
             }
 
+            app.UseExceptionHandler();
             app.MapHealthChecks("/health");
             app.UseHttpsRedirection();
             app.UseAuthentication();

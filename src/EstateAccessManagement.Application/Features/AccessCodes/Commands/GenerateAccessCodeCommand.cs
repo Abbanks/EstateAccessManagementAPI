@@ -4,7 +4,7 @@ using MediatR;
 
 namespace EstateAccessManagement.Application.Features.AccessCodes.Commands
 {
-    public class CreateAccessCodeCommand : IRequest<CreateAccessCodeResult>
+    public class GenerateAccessCodeCommand : IRequest<GenerateAccessCodeResult>
     {
         public AccessCodeType CodeType { get; set; }
     }

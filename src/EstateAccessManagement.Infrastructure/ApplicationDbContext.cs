@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace EstateAccessManagement.Infrastructure;
 
@@ -61,6 +62,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .WithMany() 
                 .HasForeignKey(ac => ac.ResidentId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(ac => ac.RowVersion)
+            .IsRowVersion()
+            .IsConcurrencyToken();
         });
     }
 }

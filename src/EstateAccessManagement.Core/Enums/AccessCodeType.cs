@@ -4,10 +4,10 @@ namespace EstateAccessManagement.Core.Enums
 {
     public enum AccessCodeType
     {
-        None,
+        None = 0,
         [Description("TemporaryVisitor")]
-        TemporaryVisitor,
+        TemporaryVisitor = 1,
         [Description("LongStayVisitor")]
-        LongStayVisitor
+        LongStayVisitor = 2
     }
 }

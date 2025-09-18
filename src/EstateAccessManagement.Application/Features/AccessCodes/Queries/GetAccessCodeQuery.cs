@@ -3,8 +3,8 @@ using MediatR;
 
 namespace EstateAccessManagement.Application.Features.AccessCodes.Queries
 {
-    public class ValidateAccessCodeQuery : IRequest<AccessCodeValidationResult>
+    public class GetAccessCodeQuery : IRequest<GetAccessCodeResult>
     {
-        public required string Code { get; set; }
+        public Guid Id { get; set; }
     }
 }

@@ -5,7 +5,8 @@ namespace EstateAccessManagement.Application.Interfaces
 {
     public interface IAccessCodeService
     {
-        Task<CreateAccessCodeResult> GenerateAccessCodeAsync(Guid residentId, AccessCodeType type);
+        Task<GenerateAccessCodeResult> GenerateAccessCodeAsync(Guid residentId, AccessCodeType type);
         Task<AccessCodeValidationResult> ValidateAccessCodeAsync(string code);
+        Task<GetAccessCodeResult> GetAccessCodeByIdAsync(Guid Id);
     }
 }
