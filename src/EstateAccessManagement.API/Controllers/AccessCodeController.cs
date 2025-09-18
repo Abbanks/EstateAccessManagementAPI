@@ -25,7 +25,7 @@ namespace EstateAccessManagement.API.Controllers
         }
 
         [HttpPost("{id:guid}")]
-        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetAccessCode(Guid id)

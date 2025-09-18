@@ -30,5 +30,8 @@ namespace EstateAccessManagement.Core.Entities
         public int CurrentUses { get; set; } 
 
         public AppUser Resident { get; set; }
+
+        [Timestamp]
+        public byte[] RowVersion { get; set; }
     }
 }

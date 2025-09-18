@@ -49,7 +49,8 @@ namespace EstateAccessManagement.Infrastructure.Services
                 ExpiresAt = expiresAt,
                 MaxUses = maxUses,
                 CreatedAt = DateTime.UtcNow,
-                IsActive = true
+                IsActive = true,
+                RowVersion = new byte[] { 0 }
             };
 
             db.AccessCodes.Add(accessCode);
@@ -65,7 +66,8 @@ namespace EstateAccessManagement.Infrastructure.Services
                 ExpiresAt = accessCode.ExpiresAt,
                 MaxUses = accessCode.MaxUses,
                 CurrentUses = accessCode.CurrentUses,
-                IsActive = true
+                IsActive = true,
+                RowVersion = new byte[] { 0 }
             });
 
             var cacheOptions = new DistributedCacheEntryOptions
@@ -93,7 +95,6 @@ namespace EstateAccessManagement.Infrastructure.Services
         {
             var codeHash = HashCode(code);
             var cacheKey = $"{AccessCodeCacheKeyPrefix}{codeHash}";
-
             var cachedData = await cache.GetStringAsync(cacheKey);
             CachedAccessCode cachedCode = null;
 
@@ -141,17 +142,38 @@ namespace EstateAccessManagement.Infrastructure.Services
                     }
 
                     var updatedCacheValue = JsonSerializer.Serialize(cachedCode);
+
                     await cache.SetStringAsync(cacheKey, updatedCacheValue, new DistributedCacheEntryOptions
                     {
                         AbsoluteExpiration = cachedCode.ExpiresAt.AddHours(1)
                     });
 
-                    var dbAccessCode = await db.AccessCodes.FirstOrDefaultAsync(ac => ac.Id == cachedCode.Id);
-                    if (dbAccessCode != null)
+                    // Retry loop for optimistic concurrency control
+                    bool saved = false;
+                    int maxRetries = 3;
+                    int attempt = 0;
+
+                    while (!saved && attempt < maxRetries)
                     {
-                        dbAccessCode.CurrentUses = cachedCode.CurrentUses;
-                        dbAccessCode.IsActive = cachedCode.IsActive;
-                        await db.SaveChangesAsync();
+                        attempt++;
+                        try
+                        {
+                            var dbAccessCode = await db.AccessCodes.FirstOrDefaultAsync(ac => ac.Id == cachedCode.Id);
+                            if (dbAccessCode != null)
+                            {
+                                dbAccessCode.CurrentUses = cachedCode.CurrentUses;
+                                dbAccessCode.IsActive = cachedCode.IsActive;
+                                await db.SaveChangesAsync();
+                            }
+                            saved = true;
+                        }
+                        catch (DbUpdateConcurrencyException)
+                        {
+                            if (attempt == maxRetries)
+                            {
+                                throw;
+                            }
+                        }
                     }
 
                     return new AccessCodeValidationResult
@@ -168,7 +190,6 @@ namespace EstateAccessManagement.Infrastructure.Services
             var accessCode = await db.AccessCodes
                 .Where(ac => ac.IsActive)
                 .FirstOrDefaultAsync(ac => ac.CodeHash == codeHash);
-
             if (accessCode == null)
             {
                 return new AccessCodeValidationResult
@@ -182,6 +203,7 @@ namespace EstateAccessManagement.Infrastructure.Services
             {
                 accessCode.IsActive = false;
                 await db.SaveChangesAsync();
+
                 return new AccessCodeValidationResult
                 {
                     IsValid = false,
@@ -291,6 +313,7 @@ namespace EstateAccessManagement.Infrastructure.Services
             public int? MaxUses { get; set; }
             public int CurrentUses { get; set; }
             public bool IsActive { get; set; }
+            public byte[] RowVersion { get; set; }
         }
     }
 }

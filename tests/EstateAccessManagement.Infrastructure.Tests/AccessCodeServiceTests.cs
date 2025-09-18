@@ -5,8 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.Text;
-using System.Text.Json;
 
 namespace EstateAccessManagement.Infrastructure.Tests;
 public class AccessCodeServiceTests
@@ -26,12 +24,6 @@ public class AccessCodeServiceTests
         _cacheMock = new Mock<IDistributedCache>();
 
         _accessCodeService = new AccessCodeService(_loggerMock.Object, _dbContext, _cacheMock.Object);
-    }
-
-    private byte[] SerializeObject<T>(T obj)
-    {
-        var json = JsonSerializer.Serialize(obj);
-        return Encoding.UTF8.GetBytes(json);
     }
 
     [Fact]
@@ -80,7 +72,8 @@ public class AccessCodeServiceTests
             MaxUses = 1,
             CurrentUses = 0,
             IsActive = true,
-            CodeType = AccessCodeType.TemporaryVisitor
+            CodeType = AccessCodeType.TemporaryVisitor,
+            RowVersion = new byte[] { 0 }
         };
         _dbContext.AccessCodes.Add(accessCode);
         await _dbContext.SaveChangesAsync();
@@ -115,7 +108,8 @@ public class AccessCodeServiceTests
             MaxUses = 1,
             CurrentUses = 1,
             IsActive = true,
-            CodeType = AccessCodeType.TemporaryVisitor
+            CodeType = AccessCodeType.TemporaryVisitor,
+            RowVersion = new byte[] { 0 }
         };
         _dbContext.AccessCodes.Add(accessCode);
         await _dbContext.SaveChangesAsync();
@@ -163,7 +157,8 @@ public class AccessCodeServiceTests
             MaxUses = null,
             CurrentUses = 0,
             IsActive = false,
-            CodeType = AccessCodeType.LongStayVisitor
+            CodeType = AccessCodeType.LongStayVisitor,
+            RowVersion = new byte[] { 0 }
         };
         _dbContext.AccessCodes.Add(accessCode);
         await _dbContext.SaveChangesAsync();

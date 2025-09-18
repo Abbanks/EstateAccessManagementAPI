@@ -9,7 +9,7 @@ namespace EstateAccessManagement.Application.Features.AccessCodes.Queries
       ILogger<GetAccessCodeQueryHandler> logger,
       IAccessCodeService accessCodeService) : IRequestHandler<GetAccessCodeQuery, GetAccessCodeResult>
     {
-        public async Task<GetAccessCodeResult?> Handle(GetAccessCodeQuery request, CancellationToken cancellationToken)
+        public async Task<GetAccessCodeResult> Handle(GetAccessCodeQuery request, CancellationToken cancellationToken)
         {
             logger.LogInformation("Fetching access code for Id: {Id}", request.Id);
 
