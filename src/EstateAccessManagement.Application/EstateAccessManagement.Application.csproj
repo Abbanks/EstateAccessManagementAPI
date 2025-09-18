@@ -8,11 +8,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\EstateAccessManagement.Common\EstateAccessManagement.Common.csproj" />
     <ProjectReference Include="..\EstateAccessManagement.Core\EstateAccessManagement.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\AccessCodes\Validators\" />
     <Folder Include="Features\Users\Queries\" />
   </ItemGroup>
 

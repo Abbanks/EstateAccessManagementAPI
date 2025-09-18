@@ -21,6 +21,26 @@ namespace EstateAccessManagement.Infrastructure
 
             logger.LogInformation("Seeding database started...");
 
+            var roles = new[] { "Admin", "Resident", "Security" };
+
+            foreach (var role in roles)
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                {
+                    var roleResult = await roleManager.CreateAsync(new IdentityRole<Guid>(role));
+                    if (roleResult.Succeeded)
+                    {
+                        logger.LogInformation("'{Role}' role created successfully.", role);
+                    }
+                    else
+                    {
+                        logger.LogError("Failed to create '{Role}' role: {Errors}",
+                                        role, string.Join(", ", roleResult.Errors.Select(e => e.Description)));
+                        return;
+                    }
+                }
+            }
+
             const string adminRole = "Admin";
             var adminEmail = configuration["AdminUser:Email"];
             var adminPassword = configuration["AdminUser:Password"];
@@ -29,21 +49,6 @@ namespace EstateAccessManagement.Infrastructure
             {
                 logger.LogError("Admin user credentials are not configured in appsettings.json.");
                 return;
-            }
-
-            if (!await roleManager.RoleExistsAsync(adminRole))
-            {
-                var roleResult = await roleManager.CreateAsync(new IdentityRole<Guid>(adminRole));
-                if (roleResult.Succeeded)
-                {
-                    logger.LogInformation("'{Role}' role created successfully.", adminRole);
-                }
-                else
-                {
-                    logger.LogError("Failed to create '{Role}' role: {Errors}",
-                                     adminRole, string.Join(", ", roleResult.Errors.Select(e => e.Description)));
-                    return;
-                }
             }
 
             var adminUser = await userManager.FindByEmailAsync(adminEmail);

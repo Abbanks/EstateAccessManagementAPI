@@ -15,6 +15,7 @@ COPY ["src/EstateAccessManagement.API/EstateAccessManagement.API.csproj", "src/E
 COPY ["src/EstateAccessManagement.Application/EstateAccessManagement.Application.csproj", "src/EstateAccessManagement.Application/"]
 COPY ["src/EstateAccessManagement.Core/EstateAccessManagement.Core.csproj", "src/EstateAccessManagement.Core/"]
 COPY ["src/EstateAccessManagement.Infrastructure/EstateAccessManagement.Infrastructure.csproj", "src/EstateAccessManagement.Infrastructure/"]
+COPY ["src/EstateAccessManagement.Common/EstateAccessManagement.Common.csproj", "src/EstateAccessManagement.Common/"]
 RUN dotnet restore "./src/EstateAccessManagement.API/EstateAccessManagement.API.csproj"
 COPY . .
 WORKDIR "/src/src/EstateAccessManagement.API"

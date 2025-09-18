@@ -2,7 +2,7 @@
 
 namespace EstateAccessManagement.Application.Features.AccessCodes.DTOs
 {
-    public class CreateAccessCodeResult
+    public class GenerateAccessCodeResult
     {
         public Guid Id { get; set; }
         public Guid ResidentId { get; set; }
