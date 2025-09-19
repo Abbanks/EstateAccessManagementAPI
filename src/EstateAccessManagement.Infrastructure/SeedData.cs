@@ -1,5 +1,5 @@
-﻿using EstateAccessManagement.Core.Entities;
-using EstateAccessManagement.Core.Enums;
+﻿using EstateAccessManagement.Common.Enums;
+using EstateAccessManagement.Core.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

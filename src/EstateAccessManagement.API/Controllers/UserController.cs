@@ -1,5 +1,6 @@
 ﻿using EstateAccessManagement.Application.DTOs;
 using EstateAccessManagement.Application.Features.Users.Commands;
+using EstateAccessManagement.Application.Features.Users.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

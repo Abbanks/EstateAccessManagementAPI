@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace EstateAccessManagement.Core.Enums
+namespace EstateAccessManagement.Common.Enums
 {
     public enum AccessCodeType
     {

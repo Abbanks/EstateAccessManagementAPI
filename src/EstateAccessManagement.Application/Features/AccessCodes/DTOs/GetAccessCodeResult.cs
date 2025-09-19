@@ -1,4 +1,4 @@
-﻿using EstateAccessManagement.Core.Enums;
+﻿using EstateAccessManagement.Common.Enums;
 
 namespace EstateAccessManagement.Application.Features.AccessCodes.DTOs
 {

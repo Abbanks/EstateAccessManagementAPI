@@ -1,4 +1,4 @@
-﻿using EstateAccessManagement.Core.Enums;
+﻿using EstateAccessManagement.Common.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace EstateAccessManagement.Core.Entities

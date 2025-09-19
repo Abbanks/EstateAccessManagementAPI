@@ -1,5 +1,5 @@
-﻿using EstateAccessManagement.Core.Entities;
-using EstateAccessManagement.Core.Enums;
+﻿using EstateAccessManagement.Common.Enums;
+using EstateAccessManagement.Core.Entities;
 using EstateAccessManagement.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;

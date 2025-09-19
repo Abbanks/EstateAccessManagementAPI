@@ -1,5 +1,5 @@
 ﻿using EstateAccessManagement.Application.DTOs;
-using EstateAccessManagement.Core.Enums;
+using EstateAccessManagement.Common.Enums;
 using MediatR;
 
 namespace EstateAccessManagement.Application.Features.Users.Commands

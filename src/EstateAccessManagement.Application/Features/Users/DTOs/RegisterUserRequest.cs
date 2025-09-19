@@ -1,6 +1,6 @@
-﻿using EstateAccessManagement.Core.Enums;
+﻿using EstateAccessManagement.Common.Enums;
 
-namespace EstateAccessManagement.Application.DTOs
+namespace EstateAccessManagement.Application.Features.Users.DTOs
 {
     public class RegisterUserRequest
     {

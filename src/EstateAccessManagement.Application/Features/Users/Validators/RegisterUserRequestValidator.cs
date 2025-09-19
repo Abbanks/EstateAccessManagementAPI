@@ -1,4 +1,4 @@
-﻿using EstateAccessManagement.Application.DTOs;
+﻿using EstateAccessManagement.Application.Features.Users.DTOs;
 using FluentValidation;
 
 namespace EstateAccessManagement.Application.Features.Users.Validators
