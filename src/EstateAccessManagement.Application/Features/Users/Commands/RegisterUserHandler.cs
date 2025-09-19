@@ -38,7 +38,7 @@ namespace EstateAccessManagement.Application.Features.Users.Commands
             if (!result.Succeeded)
             {
                 logger.LogError("User registration failed for {Email}: {Errors}", request.Email, string.Join(", ", result.Errors.Select(e => e.Description)));
-                throw new ArgumentException("User registration failed: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+                throw new ApplicationException("User registration failed: " + string.Join(", ", result.Errors.Select(e => e.Description)));
             }
 
             var roleResult = await userManager.AddToRoleAsync(user, request.UserType.ToString());
