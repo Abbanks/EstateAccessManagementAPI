@@ -1,4 +1,5 @@
 ﻿using EstateAccessManagement.Application.DTOs;
+using EstateAccessManagement.Common.Extensions;
 using EstateAccessManagement.Core.Entities;
 using FluentValidation;
 using MediatR;
@@ -53,7 +54,8 @@ namespace EstateAccessManagement.Application.Features.Users.Commands
             return new RegisterUserResponse
             {
                 Message = "User registered successfully",
-                UserId = user.Id
+                UserId = user.Id,
+                UserType = request.UserType.GetDescription()
             };
         }
     }

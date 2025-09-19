@@ -44,7 +44,6 @@ namespace EstateAccessManagement.API
                 });
             });
             builder.Services.AddHealthChecks();
-            builder.Services.AddOpenApi();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddApplicationServices();
             builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -78,11 +77,10 @@ namespace EstateAccessManagement.API
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
-                app.MapOpenApi();
-
+                app.UseSwagger();
                 app.UseSwaggerUI(options =>
                 {
-                    options.SwaggerEndpoint("/openapi/v1.json", "EAMS API v1");
+                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "EAMS API v1");
                     options.RoutePrefix = "swagger";
                     options.DocumentTitle = "EAMS API Documentation";
                 });

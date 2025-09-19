@@ -10,4 +10,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.8" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\EstateAccessManagement.Common\EstateAccessManagement.Common.csproj" />
+  </ItemGroup>
+
 </Project>

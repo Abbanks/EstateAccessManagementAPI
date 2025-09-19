@@ -1,4 +1,4 @@
-﻿using EstateAccessManagement.Core.Enums;
+﻿using EstateAccessManagement.Common.Enums;
 using Microsoft.AspNetCore.Identity;
 
 namespace EstateAccessManagement.Core.Entities;
