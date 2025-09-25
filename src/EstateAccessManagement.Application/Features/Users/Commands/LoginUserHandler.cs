@@ -8,8 +8,8 @@ using Microsoft.Extensions.Logging;
 namespace EstateAccessManagement.Application.Features.Users.Commands
 {
     public class LoginUserHandler(
-        UserManager<AppUser> userManager, 
-        ILogger<LoginUserHandler> logger, 
+        UserManager<AppUser> userManager,
+        ILogger<LoginUserHandler> logger,
         IAuthService authService)
     : IRequestHandler<LoginUserCommand, LoginUserResponse>
     {

@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Emit;
 
 namespace EstateAccessManagement.Infrastructure;
 
@@ -59,7 +58,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasIndex(ac => ac.ExpiresAt);
 
             entity.HasOne(ac => ac.Resident)
-                .WithMany() 
+                .WithMany()
                 .HasForeignKey(ac => ac.ResidentId)
                 .OnDelete(DeleteBehavior.Cascade);
 

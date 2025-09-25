@@ -9,7 +9,7 @@ namespace EstateAccessManagement.Core.Entities
 
         [Required]
         [MaxLength(8)]
-        public string CodeHash { get; set; } 
+        public string CodeHash { get; set; }
 
         [Required]
         public Guid ResidentId { get; set; }
@@ -27,7 +27,7 @@ namespace EstateAccessManagement.Core.Entities
 
         public int? MaxUses { get; set; }
 
-        public int CurrentUses { get; set; } 
+        public int CurrentUses { get; set; }
 
         public AppUser Resident { get; set; }
 

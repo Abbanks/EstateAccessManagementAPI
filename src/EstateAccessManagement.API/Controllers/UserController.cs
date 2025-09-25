@@ -21,10 +21,10 @@ namespace EstateAccessManagement.API.Controllers
         {
             var command = new RegisterUserCommand
             {
-                Email = request.Email,
+                Email = request.Email.Trim(),
                 Password = request.Password,
-                FirstName = request.FirstName,
-                LastName = request.LastName,
+                FirstName = request.FirstName.Trim(),
+                LastName = request.LastName.Trim(),
                 UserType = request.UserType
             };
 
@@ -41,7 +41,7 @@ namespace EstateAccessManagement.API.Controllers
         {
             var query = new LoginUserCommand
             {
-                Email = request.Email,
+                Email = request.Email.Trim(),
                 Password = request.Password
             };
 
