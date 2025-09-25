@@ -12,7 +12,7 @@ using System.Text.Json;
 namespace EstateAccessManagement.Infrastructure.Services
 {
     public class AccessCodeService(
-        ILogger<AccessCodeService> logger, 
+        ILogger<AccessCodeService> logger,
         ApplicationDbContext db,
         IDistributedCache cache) : IAccessCodeService
     {
@@ -28,16 +28,16 @@ namespace EstateAccessManagement.Infrastructure.Services
             {
                 case AccessCodeType.TemporaryVisitor:
                     expiresAt = DateTime.UtcNow.AddHours(24);
-                    maxUses = 1; 
+                    maxUses = 1;
                     break;
 
                 case AccessCodeType.LongStayVisitor:
                     expiresAt = DateTime.UtcNow.AddDays(7);
-                    maxUses = null; 
+                    maxUses = null;
                     break;
 
                 default:
-                    expiresAt = DateTime.UtcNow.AddDays(30); 
+                    expiresAt = DateTime.UtcNow.AddDays(30);
                     break;
             }
 
