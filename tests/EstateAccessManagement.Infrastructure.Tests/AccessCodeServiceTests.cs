@@ -1,5 +1,9 @@
-﻿using EstateAccessManagement.Common.Enums;
+﻿using EstateAccessManagement.Application.Features.Users;
+using EstateAccessManagement.Application.Interfaces.Email;
+using EstateAccessManagement.Application.Interfaces.Messaging;
+using EstateAccessManagement.Application.Interfaces.Services;
 using EstateAccessManagement.Core.Entities;
+using EstateAccessManagement.Core.Enums;
 using EstateAccessManagement.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
@@ -13,6 +17,9 @@ public class AccessCodeServiceTests
     private readonly AccessCodeService _accessCodeService;
     private readonly Mock<ILogger<AccessCodeService>> _loggerMock;
     private readonly Mock<IDistributedCache> _cacheMock;
+    private readonly Mock<IMessageQueueClient> _mqClientMock;
+    private readonly Mock<IEmailService> _emailServiceMock;
+    private readonly Mock<IUserService> _userServiceMock;
 
     public AccessCodeServiceTests()
     {
@@ -22,8 +29,14 @@ public class AccessCodeServiceTests
         _dbContext = new ApplicationDbContext(options);
         _loggerMock = new Mock<ILogger<AccessCodeService>>();
         _cacheMock = new Mock<IDistributedCache>();
-
-        _accessCodeService = new AccessCodeService(_loggerMock.Object, _dbContext, _cacheMock.Object);
+        _mqClientMock = new Mock<IMessageQueueClient>();
+        _emailServiceMock = new Mock<IEmailService>();
+        _userServiceMock = new Mock<IUserService>();
+        _userServiceMock.Setup(us => us.GetUserById(It.IsAny<Guid>()))
+            .ReturnsAsync(new GetUserByIdResult{ Email = "test@example.com"});
+        _accessCodeService = new AccessCodeService(_loggerMock.Object, _dbContext,
+            _cacheMock.Object, _userServiceMock.Object, _mqClientMock.Object,
+            _emailServiceMock.Object);
     }
 
     [Fact]
@@ -67,6 +80,7 @@ public class AccessCodeServiceTests
             Id = Guid.NewGuid(),
             ResidentId = residentId,
             CodeHash = hashedCode,
+            Code = rawCode,
             CreatedAt = DateTime.UtcNow.AddHours(-2),
             ExpiresAt = DateTime.UtcNow.AddHours(-1),
             MaxUses = 1,
@@ -78,13 +92,15 @@ public class AccessCodeServiceTests
         _dbContext.AccessCodes.Add(accessCode);
         await _dbContext.SaveChangesAsync();
 
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                  .ReturnsAsync((byte[])null);
+        _cacheMock.Setup(c => c.GetAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((byte[])null);
 
         var result = await _accessCodeService.ValidateAccessCodeAsync(rawCode);
 
         Assert.False(result.IsValid);
-        Assert.Equal("Access code has expired.", result.Message);
+        Assert.Equal("Access code invalid.", result.Message);
         Assert.Equal(accessCode.Id, result.AccessCodeId);
         Assert.Equal(accessCode.ResidentId, result.ResidentId);
 
@@ -103,6 +119,7 @@ public class AccessCodeServiceTests
             Id = Guid.NewGuid(),
             ResidentId = residentId,
             CodeHash = hashedCode,
+            Code = rawCode,
             CreatedAt = DateTime.UtcNow.AddHours(-2),
             ExpiresAt = DateTime.UtcNow.AddHours(1),
             MaxUses = 1,
@@ -114,8 +131,10 @@ public class AccessCodeServiceTests
         _dbContext.AccessCodes.Add(accessCode);
         await _dbContext.SaveChangesAsync();
 
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                  .ReturnsAsync((byte[])null);
+        _cacheMock.Setup(c => c.GetAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((byte[])null);
 
         var result = await _accessCodeService.ValidateAccessCodeAsync(rawCode);
 
@@ -131,13 +150,15 @@ public class AccessCodeServiceTests
     [Fact]
     public async Task ValidateAccessCodeAsync_ShouldReturnFalse_ForNonexistentCode()
     {
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                  .ReturnsAsync((byte[])null);
+        _cacheMock.Setup(c => c.GetAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((byte[])null);
 
         var result = await _accessCodeService.ValidateAccessCodeAsync("NONEXISTENT");
 
         Assert.False(result.IsValid);
-        Assert.Equal("Access code not found or inactive.", result.Message);
+        Assert.Equal("Access code invalid.", result.Message);
         Assert.Null(result.AccessCodeId);
         Assert.Null(result.ResidentId);
     }
@@ -152,6 +173,7 @@ public class AccessCodeServiceTests
             Id = Guid.NewGuid(),
             ResidentId = Guid.NewGuid(),
             CodeHash = hashedCode,
+            Code = rawCode,    
             CreatedAt = DateTime.UtcNow.AddHours(-2),
             ExpiresAt = DateTime.UtcNow.AddDays(7),
             MaxUses = null,
@@ -163,14 +185,29 @@ public class AccessCodeServiceTests
         _dbContext.AccessCodes.Add(accessCode);
         await _dbContext.SaveChangesAsync();
 
-        _cacheMock.Setup(c => c.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                  .ReturnsAsync((byte[])null);
+        _cacheMock.Setup(c => c.GetAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((byte[])null);
 
         var result = await _accessCodeService.ValidateAccessCodeAsync(rawCode);
 
         Assert.False(result.IsValid);
-        Assert.Equal("Access code not found or inactive.", result.Message);
+        Assert.Equal("Access code invalid.", result.Message);
         Assert.Null(result.AccessCodeId);
         Assert.Null(result.ResidentId);
+    }
+
+    [Fact]
+    public async Task GenerateAccessCodeAsync_ShouldPublishNotificationMessage()
+    {
+        var residentId = Guid.NewGuid();
+        var codeType = AccessCodeType.LongStayVisitor;
+
+       await _accessCodeService.GenerateAccessCodeAsync(residentId, codeType);
+
+        _mqClientMock.Verify(mq => mq.PublishAsync(
+            It.Is<string>(q => q == "AccessCodeNotifications"),
+            It.IsAny<string>()), Times.Once);
     }
 }

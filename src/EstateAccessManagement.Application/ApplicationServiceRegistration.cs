@@ -1,4 +1,4 @@
-﻿using EstateAccessManagement.Common.Behaviors;
+﻿using EstateAccessManagement.Core.Behaviors;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,7 +1,7 @@
 ﻿using EstateAccessManagement.Application.Features.AccessCodes.DTOs;
 using EstateAccessManagement.Application.Features.AccessCodes.Queries;
-using EstateAccessManagement.Application.Interfaces;
-using EstateAccessManagement.Common.Enums;
+using EstateAccessManagement.Application.Interfaces.Services;
+using EstateAccessManagement.Core.Enums;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -28,7 +28,7 @@ namespace EstateAccessManagement.Application.Tests
             {
                 Id = accessCodeId,
                 CodeType = AccessCodeType.LongStayVisitor,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow.ToString("f"),
                 IsActive = true,
                 MaxUses = null,
                 CurrentUses = 1

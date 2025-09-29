@@ -1,5 +1,5 @@
 ﻿using EstateAccessManagement.Application.Features.AccessCodes.DTOs;
-using EstateAccessManagement.Application.Interfaces;
+using EstateAccessManagement.Application.Interfaces.Services;
 using MediatR;
 using Microsoft.Extensions.Logging;
 

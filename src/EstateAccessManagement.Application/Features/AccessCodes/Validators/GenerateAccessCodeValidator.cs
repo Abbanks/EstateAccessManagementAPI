@@ -1,5 +1,5 @@
 ﻿using EstateAccessManagement.Application.Features.AccessCodes.Commands;
-using EstateAccessManagement.Common.Enums;
+using EstateAccessManagement.Core.Enums;
 using FluentValidation;
 
 namespace EstateAccessManagement.Application.Features.AccessCodes.Validators

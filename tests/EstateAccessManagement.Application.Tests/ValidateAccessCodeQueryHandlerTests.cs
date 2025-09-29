@@ -1,6 +1,6 @@
 ﻿using EstateAccessManagement.Application.Features.AccessCodes.DTOs;
 using EstateAccessManagement.Application.Features.AccessCodes.Queries;
-using EstateAccessManagement.Application.Interfaces;
+using EstateAccessManagement.Application.Interfaces.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 

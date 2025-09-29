@@ -1,6 +1,6 @@
 ﻿using EstateAccessManagement.Application.DTOs;
-using EstateAccessManagement.Common.Extensions;
 using EstateAccessManagement.Core.Entities;
+using EstateAccessManagement.Core.Extensions;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Identity;

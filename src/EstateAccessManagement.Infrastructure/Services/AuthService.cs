@@ -1,4 +1,4 @@
-﻿using EstateAccessManagement.Application.Interfaces;
+﻿using EstateAccessManagement.Application.Interfaces.Services;
 using EstateAccessManagement.Core.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
