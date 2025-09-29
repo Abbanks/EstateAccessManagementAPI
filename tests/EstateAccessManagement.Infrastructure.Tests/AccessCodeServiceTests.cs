@@ -87,7 +87,8 @@ public class AccessCodeServiceTests
             CurrentUses = 0,
             IsActive = true,
             CodeType = AccessCodeType.TemporaryVisitor,
-            RowVersion = new byte[] { 0 }
+            RowVersion = new byte[] { 0 },
+            IsDeprecated = false,
         };
         _dbContext.AccessCodes.Add(accessCode);
         await _dbContext.SaveChangesAsync();
@@ -126,7 +127,8 @@ public class AccessCodeServiceTests
             CurrentUses = 1,
             IsActive = true,
             CodeType = AccessCodeType.TemporaryVisitor,
-            RowVersion = new byte[] { 0 }
+            RowVersion = new byte[] { 0 },
+            IsDeprecated = false,
         };
         _dbContext.AccessCodes.Add(accessCode);
         await _dbContext.SaveChangesAsync();
@@ -173,14 +175,15 @@ public class AccessCodeServiceTests
             Id = Guid.NewGuid(),
             ResidentId = Guid.NewGuid(),
             CodeHash = hashedCode,
-            Code = rawCode,    
+            Code = rawCode,
             CreatedAt = DateTime.UtcNow.AddHours(-2),
             ExpiresAt = DateTime.UtcNow.AddDays(7),
             MaxUses = null,
             CurrentUses = 0,
             IsActive = false,
             CodeType = AccessCodeType.LongStayVisitor,
-            RowVersion = new byte[] { 0 }
+            RowVersion = new byte[] { 0 },
+            IsDeprecated = false,
         };
         _dbContext.AccessCodes.Add(accessCode);
         await _dbContext.SaveChangesAsync();

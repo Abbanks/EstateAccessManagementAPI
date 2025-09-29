@@ -9,6 +9,12 @@ public class UserService(
     public async Task<GetUserByIdResult> GetUserById(Guid id)
     {
         var user = await db.AppUsers.FindAsync(id);
+
+        if (user == null)
+        {
+            return null;
+        } 
+
         return new GetUserByIdResult
         {
             FirstName = user.FirstName,

@@ -59,7 +59,8 @@ namespace EstateAccessManagement.Infrastructure.Services
                 MaxUses = maxUses,
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true,
-                RowVersion = new byte[] { 0 }
+                RowVersion = new byte[] { 0 },
+                IsDeprecated = false,
             };
 
             db.AccessCodes.Add(accessCode);
@@ -77,7 +78,8 @@ namespace EstateAccessManagement.Infrastructure.Services
                 MaxUses = accessCode.MaxUses,
                 CurrentUses = accessCode.CurrentUses,
                 IsActive = true,
-                RowVersion = new byte[] { 0 }
+                RowVersion = new byte[] { 0 },
+                IsDeprecated = accessCode.IsDeprecated,
             });
 
             var cacheOptions = new DistributedCacheEntryOptions
@@ -220,7 +222,8 @@ namespace EstateAccessManagement.Infrastructure.Services
                 MaxUses = accessCode.MaxUses,
                 CurrentUses = accessCode.CurrentUses,
                 IsActive = accessCode.IsActive,
-                RowVersion = accessCode.RowVersion
+                RowVersion = accessCode.RowVersion,
+                IsDeprecated = accessCode.IsDeprecated
             };
             await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(newCache),
                 new DistributedCacheEntryOptions { AbsoluteExpiration = accessCode.ExpiresAt.AddHours(1) });
