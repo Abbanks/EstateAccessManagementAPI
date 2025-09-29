@@ -1,5 +1,5 @@
 ﻿using EstateAccessManagement.Application.DTOs;
-using EstateAccessManagement.Application.Interfaces;
+using EstateAccessManagement.Application.Interfaces.Services;
 using EstateAccessManagement.Core.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;

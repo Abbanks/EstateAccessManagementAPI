@@ -1,7 +1,11 @@
 ﻿using EstateAccessManagement.Application.Features.AccessCodes.DTOs;
-using EstateAccessManagement.Application.Interfaces;
-using EstateAccessManagement.Common.Enums;
+using EstateAccessManagement.Application.Interfaces.Email;
+using EstateAccessManagement.Application.Interfaces.Messaging;
+using EstateAccessManagement.Application.Interfaces.Services;
+using EstateAccessManagement.Core.AccessCodes;
 using EstateAccessManagement.Core.Entities;
+using EstateAccessManagement.Core.Enums;
+using EstateAccessManagement.Core.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
@@ -14,7 +18,11 @@ namespace EstateAccessManagement.Infrastructure.Services
     public class AccessCodeService(
         ILogger<AccessCodeService> logger,
         ApplicationDbContext db,
-        IDistributedCache cache) : IAccessCodeService
+        IDistributedCache cache,
+        IUserService userService,
+        IMessageQueueClient messageQueueClient,
+        IEmailService emailSender
+        ) : IAccessCodeService
     {
         private const string AccessCodeCacheKeyPrefix = "access_code:";
         public async Task<GenerateAccessCodeResult> GenerateAccessCodeAsync(Guid residentId, AccessCodeType type)
@@ -44,13 +52,15 @@ namespace EstateAccessManagement.Infrastructure.Services
             var accessCode = new AccessCode
             {
                 ResidentId = residentId,
+                Code = rawCode,
                 CodeType = type,
                 CodeHash = codeHash,
                 ExpiresAt = expiresAt,
                 MaxUses = maxUses,
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true,
-                RowVersion = new byte[] { 0 }
+                RowVersion = new byte[] { 0 },
+                IsDeprecated = false,
             };
 
             db.AccessCodes.Add(accessCode);
@@ -60,6 +70,7 @@ namespace EstateAccessManagement.Infrastructure.Services
             var cachedData = JsonSerializer.Serialize(new CachedAccessCode
             {
                 Id = accessCode.Id,
+                Code = rawCode,
                 ResidentId = accessCode.ResidentId,
                 CodeHash = accessCode.CodeHash,
                 CodeType = accessCode.CodeType,
@@ -67,7 +78,8 @@ namespace EstateAccessManagement.Infrastructure.Services
                 MaxUses = accessCode.MaxUses,
                 CurrentUses = accessCode.CurrentUses,
                 IsActive = true,
-                RowVersion = new byte[] { 0 }
+                RowVersion = new byte[] { 0 },
+                IsDeprecated = accessCode.IsDeprecated,
             });
 
             var cacheOptions = new DistributedCacheEntryOptions
@@ -77,17 +89,29 @@ namespace EstateAccessManagement.Infrastructure.Services
 
             await cache.SetStringAsync(cacheKey, cachedData, cacheOptions);
 
+            var residentInfo = await userService.GetUserById(residentId);
+            var notificationEvent = new AccessCodeNotification
+            {
+                ResidentId = accessCode.ResidentId,
+                ResidentEmail = residentInfo.Email,
+                AccessCode = rawCode,
+                CodeType = accessCode.CodeType.GetDescription(),
+                ExpiresAt = accessCode.ExpiresAt,
+            };
+            string message = JsonSerializer.Serialize(notificationEvent);
+            await messageQueueClient.PublishAsync("AccessCodeNotifications", message);
+
             return new GenerateAccessCodeResult
             {
                 Id = accessCode.Id,
                 ResidentId = accessCode.ResidentId,
                 Code = rawCode,
                 CodeType = accessCode.CodeType,
-                ExpiresAt = accessCode.ExpiresAt,
+                ExpiresAt = accessCode.ExpiresAt.ToString("f"),
                 MaxUses = accessCode.MaxUses,
                 CurrentUses = accessCode.CurrentUses,
                 IsActive = accessCode.IsActive,
-                CreatedAt = accessCode.CreatedAt
+                CreatedAt = accessCode.CreatedAt.ToString("f"),
             };
         }
 
@@ -96,120 +120,74 @@ namespace EstateAccessManagement.Infrastructure.Services
             var codeHash = HashCode(code);
             var cacheKey = $"{AccessCodeCacheKeyPrefix}{codeHash}";
             var cachedData = await cache.GetStringAsync(cacheKey);
-            CachedAccessCode cachedCode = null;
+            CachedAccessCode? cachedCode = !string.IsNullOrEmpty(cachedData) ? JsonSerializer.Deserialize<CachedAccessCode>(cachedData) : null;
 
-            if (!string.IsNullOrEmpty(cachedData))
+            if (cachedCode != null)
             {
-                cachedCode = JsonSerializer.Deserialize<CachedAccessCode>(cachedData);
-                if (cachedCode != null)
+                if (cachedCode.IsDeprecated || !cachedCode.IsActive || cachedCode.ExpiresAt < DateTime.UtcNow)
                 {
-                    if (!cachedCode.IsActive || cachedCode.ExpiresAt < DateTime.UtcNow)
-                    {
-                        await cache.RemoveAsync(cacheKey);
-                        var dbEntry = await db.AccessCodes.FirstOrDefaultAsync(ac => ac.Id == cachedCode.Id);
-                        if (dbEntry != null && dbEntry.IsActive)
-                        {
-                            dbEntry.IsActive = false;
-                            await db.SaveChangesAsync();
-                        }
-                        return new AccessCodeValidationResult
-                        {
-                            IsValid = false,
-                            Message = "Access code has expired or is inactive."
-                        };
-                    }
-
-                    if (cachedCode.MaxUses.HasValue && cachedCode.CurrentUses >= cachedCode.MaxUses.Value)
-                    {
-                        await cache.RemoveAsync(cacheKey);
-                        var dbEntry = await db.AccessCodes.FirstOrDefaultAsync(ac => ac.Id == cachedCode.Id);
-                        if (dbEntry != null && dbEntry.IsActive)
-                        {
-                            dbEntry.IsActive = false;
-                            await db.SaveChangesAsync();
-                        }
-                        return new AccessCodeValidationResult
-                        {
-                            IsValid = false,
-                            Message = "Access code has reached its maximum number of uses."
-                        };
-                    }
-
-                    cachedCode.CurrentUses++;
-                    if (cachedCode.MaxUses.HasValue && cachedCode.CurrentUses >= cachedCode.MaxUses.Value)
-                    {
-                        cachedCode.IsActive = false;
-                    }
-
-                    var updatedCacheValue = JsonSerializer.Serialize(cachedCode);
-
-                    await cache.SetStringAsync(cacheKey, updatedCacheValue, new DistributedCacheEntryOptions
-                    {
-                        AbsoluteExpiration = cachedCode.ExpiresAt.AddHours(1)
-                    });
-
-                    // Retry loop for optimistic concurrency control
-                    bool saved = false;
-                    int maxRetries = 3;
-                    int attempt = 0;
-
-                    while (!saved && attempt < maxRetries)
-                    {
-                        attempt++;
-                        try
-                        {
-                            var dbAccessCode = await db.AccessCodes.FirstOrDefaultAsync(ac => ac.Id == cachedCode.Id);
-                            if (dbAccessCode != null)
-                            {
-                                dbAccessCode.CurrentUses = cachedCode.CurrentUses;
-                                dbAccessCode.IsActive = cachedCode.IsActive;
-                                await db.SaveChangesAsync();
-                            }
-                            saved = true;
-                        }
-                        catch (DbUpdateConcurrencyException)
-                        {
-                            if (attempt == maxRetries)
-                            {
-                                throw;
-                            }
-                        }
-                    }
-
-                    return new AccessCodeValidationResult
-                    {
-                        IsValid = true,
-                        Message = "Access code is valid.",
-                        ResidentId = cachedCode.ResidentId,
-                        AccessCodeId = cachedCode.Id
-                    };
+                    await InvalidateCodeAsync(cacheKey, cachedCode.Id);
+                    return new AccessCodeValidationResult { IsValid = false, Message = "Access code is invalid." };
                 }
-            }
 
-            // Cache miss fallback
-            var accessCode = await db.AccessCodes
-                .Where(ac => ac.IsActive)
-                .FirstOrDefaultAsync(ac => ac.CodeHash == codeHash);
-            if (accessCode == null)
-            {
+                if (cachedCode.MaxUses.HasValue && cachedCode.CurrentUses >= cachedCode.MaxUses.Value)
+                {
+                    await InvalidateCodeAsync(cacheKey, cachedCode.Id);
+                    return new AccessCodeValidationResult { IsValid = false, Message = "Access code has reached its maximum number of uses." };
+                }
+
+                cachedCode.CurrentUses++;
+                if (cachedCode.MaxUses.HasValue && cachedCode.CurrentUses >= cachedCode.MaxUses.Value)
+                {
+                    cachedCode.IsActive = false;
+                }
+
+                await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(cachedCode),
+                    new DistributedCacheEntryOptions { AbsoluteExpiration = cachedCode.ExpiresAt.AddHours(1) });
+
+                for (int attempt = 0; attempt < 3; attempt++)
+                {
+                    try
+                    {
+                        var dbCode = await db.AccessCodes.FirstOrDefaultAsync(c => c.Id == cachedCode.Id);
+                        if (dbCode != null)
+                        {
+                            dbCode.CurrentUses = cachedCode.CurrentUses;
+                            dbCode.IsActive = cachedCode.IsActive;
+                            await db.SaveChangesAsync();
+                        }
+                        break;
+                    }
+                    catch (DbUpdateConcurrencyException)
+                    {
+                        if (attempt == 2) throw;
+                    }
+                }
+
                 return new AccessCodeValidationResult
                 {
-                    IsValid = false,
-                    Message = "Access code not found or inactive."
+                    IsValid = true,
+                    Message = "Access code is valid.",
+                    ResidentId = cachedCode.ResidentId,
+                    AccessCodeId = cachedCode.Id
                 };
             }
 
-            if (accessCode.ExpiresAt < DateTime.UtcNow)
+            // On cache miss, validate from DB as fallback
+            var accessCode = await db.AccessCodes.FirstOrDefaultAsync(ac => ac.Code == code && ac.IsActive);
+            if (accessCode == null || accessCode.ExpiresAt < DateTime.UtcNow)
             {
-                accessCode.IsActive = false;
-                await db.SaveChangesAsync();
-
+                if (accessCode != null)
+                {
+                    accessCode.IsActive = false;
+                    await db.SaveChangesAsync();
+                }
                 return new AccessCodeValidationResult
                 {
                     IsValid = false,
-                    Message = "Access code has expired.",
-                    ResidentId = accessCode.ResidentId,
-                    AccessCodeId = accessCode.Id
+                    Message = "Access code invalid.",
+                    ResidentId = accessCode?.ResidentId,
+                    AccessCodeId = accessCode?.Id
                 };
             }
 
@@ -231,25 +209,24 @@ namespace EstateAccessManagement.Infrastructure.Services
             {
                 accessCode.IsActive = false;
             }
-
             await db.SaveChangesAsync();
 
-            var newCacheValue = JsonSerializer.Serialize(new CachedAccessCode
+            var newCache = new CachedAccessCode
             {
                 Id = accessCode.Id,
+                Code = accessCode.Code,
                 ResidentId = accessCode.ResidentId,
                 CodeHash = accessCode.CodeHash,
                 CodeType = accessCode.CodeType,
                 ExpiresAt = accessCode.ExpiresAt,
                 MaxUses = accessCode.MaxUses,
                 CurrentUses = accessCode.CurrentUses,
-                IsActive = accessCode.IsActive
-            });
-
-            await cache.SetStringAsync(cacheKey, newCacheValue, new DistributedCacheEntryOptions
-            {
-                AbsoluteExpiration = accessCode.ExpiresAt.AddHours(1)
-            });
+                IsActive = accessCode.IsActive,
+                RowVersion = accessCode.RowVersion,
+                IsDeprecated = accessCode.IsDeprecated
+            };
+            await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(newCache),
+                new DistributedCacheEntryOptions { AbsoluteExpiration = accessCode.ExpiresAt.AddHours(1) });
 
             return new AccessCodeValidationResult
             {
@@ -260,7 +237,7 @@ namespace EstateAccessManagement.Infrastructure.Services
             };
         }
 
-        public async Task<GetAccessCodeResult> GetAccessCodeByIdAsync(Guid id)
+        public async Task<GetAccessCodeResult?> GetAccessCodeByIdAsync(Guid id)
         {
             var accessCode = await db.AccessCodes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
 
@@ -273,13 +250,53 @@ namespace EstateAccessManagement.Infrastructure.Services
             {
                 Id = accessCode.Id,
                 ResidentId = accessCode.ResidentId,
+                Code = accessCode.Code,
                 CodeType = accessCode.CodeType,
-                ExpiresAt = accessCode.ExpiresAt,
+                ExpiresAt = accessCode.ExpiresAt.ToString("f"),
                 MaxUses = accessCode.MaxUses,
                 CurrentUses = accessCode.CurrentUses,
                 IsActive = accessCode.IsActive,
-                CreatedAt = accessCode.CreatedAt
+                CreatedAt = accessCode.CreatedAt.ToString("f")
             };
+        }
+
+        public async Task<List<GetAccessCodeResult>?> GetAccessCodes(Guid id)
+        {
+            var accessCodes = await db.AccessCodes
+                    .AsNoTracking()
+                    .Where(c => c.ResidentId == id)
+                    .ToListAsync();
+
+            return accessCodes.Select(ac => new GetAccessCodeResult
+            {
+                Id = ac.Id,
+                ResidentId = ac.ResidentId,
+                Code = ac.Code,
+                CodeType = ac.CodeType,
+                ExpiresAt = ac.ExpiresAt.ToString("f"),
+                MaxUses = ac.MaxUses,
+                CurrentUses = ac.CurrentUses,
+                IsActive = ac.IsActive,
+                CreatedAt = ac.CreatedAt.ToString("f"),
+            }).ToList();
+        }
+
+        public async Task<bool> DeleteAccessCodeAsync(Guid id)
+        {
+            var code = await db.AccessCodes.FirstOrDefaultAsync(c => c.Id == id);
+            if (code == null || code.IsDeprecated)
+            {
+                return false;
+            }
+
+            code.IsDeprecated = true;
+            code.IsActive = false;
+            await db.SaveChangesAsync();
+
+            var cacheKey = $"{AccessCodeCacheKeyPrefix}{code.CodeHash}";
+            await cache.RemoveAsync(cacheKey);
+
+            return true;
         }
 
         private static string GenerateShortCode(AccessCodeType type)
@@ -303,17 +320,15 @@ namespace EstateAccessManagement.Infrastructure.Services
             return Convert.ToHexString(hashBytes).Substring(0, 8);
         }
 
-        private class CachedAccessCode
+        private async Task InvalidateCodeAsync(string cacheKey, Guid codeId)
         {
-            public Guid Id { get; set; }
-            public Guid ResidentId { get; set; }
-            public string CodeHash { get; set; }
-            public AccessCodeType CodeType { get; set; }
-            public DateTime ExpiresAt { get; set; }
-            public int? MaxUses { get; set; }
-            public int CurrentUses { get; set; }
-            public bool IsActive { get; set; }
-            public byte[] RowVersion { get; set; }
+            await cache.RemoveAsync(cacheKey);
+            var dbEntry = await db.AccessCodes.FirstOrDefaultAsync(ac => ac.Id == codeId);
+            if (dbEntry != null && dbEntry.IsActive)
+            {
+                dbEntry.IsActive = false;
+                await db.SaveChangesAsync();
+            }
         }
     }
 }

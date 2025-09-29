@@ -55,6 +55,13 @@ namespace EstateAccessManagement.API
             builder.Services.AddAuthorization();
             builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
             builder.Services.AddProblemDetails();
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", builder =>
+                builder.AllowAnyOrigin()
+                        .AllowAnyHeader()
+                        .AllowAnyMethod());
+            });
 
             var app = builder.Build();
 
@@ -86,6 +93,7 @@ namespace EstateAccessManagement.API
                 });
             }
 
+            app.UseCors("AllowAll");
             app.UseExceptionHandler();
             app.MapHealthChecks("/health");
             app.UseHttpsRedirection();

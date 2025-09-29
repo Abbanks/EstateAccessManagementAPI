@@ -40,6 +40,18 @@ services:
     networks:
       - eam_network
 
+  eam-rabbitmq:
+    container_name: eam-rabbitmq
+    image: rabbitmq:3-management
+    ports:
+        - "5672:5672"   
+        - "15672:15672" 
+    env_file:
+      - .env
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+
 volumes:
   pgdata:
 

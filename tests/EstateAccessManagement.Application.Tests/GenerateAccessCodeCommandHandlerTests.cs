@@ -1,7 +1,7 @@
 ﻿using EstateAccessManagement.Application.Features.AccessCodes.Commands;
 using EstateAccessManagement.Application.Features.AccessCodes.DTOs;
-using EstateAccessManagement.Application.Interfaces;
-using EstateAccessManagement.Common.Enums;
+using EstateAccessManagement.Application.Interfaces.Services;
+using EstateAccessManagement.Core.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -46,8 +46,8 @@ namespace EstateAccessManagement.Application.Tests
                 CodeType = command.CodeType,
                 Code = "TV7840",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddHours(1),
+                CreatedAt = DateTime.UtcNow.ToString("f"),
+                ExpiresAt = DateTime.UtcNow.AddHours(1).ToString("f"),
                 MaxUses = 1,
                 CurrentUses = 0
             };

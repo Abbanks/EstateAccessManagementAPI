@@ -1,6 +1,6 @@
 ﻿using EstateAccessManagement.Application.Features.AccessCodes.Commands;
 using EstateAccessManagement.Application.Features.AccessCodes.Validators;
-using EstateAccessManagement.Common.Enums;
+using EstateAccessManagement.Core.Enums;
 using FluentValidation.TestHelper;
 
 namespace EstateAccessManagement.Application.Tests;

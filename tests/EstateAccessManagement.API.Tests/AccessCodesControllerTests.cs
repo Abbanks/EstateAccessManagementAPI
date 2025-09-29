@@ -2,7 +2,7 @@
 using EstateAccessManagement.Application.Features.AccessCodes.Commands;
 using EstateAccessManagement.Application.Features.AccessCodes.DTOs;
 using EstateAccessManagement.Application.Features.AccessCodes.Queries;
-using EstateAccessManagement.Common.Enums;
+using EstateAccessManagement.Core.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Moq;

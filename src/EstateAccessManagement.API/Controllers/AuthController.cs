@@ -9,7 +9,7 @@ namespace EstateAccessManagement.API.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    public class UserController(IMediator mediator) : ControllerBase
+    public class AuthController(IMediator mediator) : ControllerBase
     {
         [HttpPost]
         [Authorize(Roles = "Admin")]
