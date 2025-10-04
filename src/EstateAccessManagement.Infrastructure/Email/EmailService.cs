@@ -47,7 +47,7 @@ public class EmailService : IEmailService
         try
         {
             using var smtpClient = new SmtpClient();
-            await smtpClient.ConnectAsync(_emailSettings.SmtpHost, _emailSettings.SmtpPort, SecureSocketOptions.StartTls);
+            await smtpClient.ConnectAsync(_emailSettings.SmtpHost, _emailSettings.SmtpPort, SecureSocketOptions.SslOnConnect);
 
             if (!string.IsNullOrWhiteSpace(_emailSettings.SmtpUser))
             {

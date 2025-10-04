@@ -46,7 +46,7 @@ namespace EstateAccessManagement.Application.Tests
                 CodeType = command.CodeType,
                 Code = "TV7840",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow.ToString("f"),
+                ValidFrom = DateTime.UtcNow.ToString("f"),
                 ExpiresAt = DateTime.UtcNow.AddHours(1).ToString("f"),
                 MaxUses = 1,
                 CurrentUses = 0

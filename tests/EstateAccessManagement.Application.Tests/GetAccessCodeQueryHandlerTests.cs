@@ -28,7 +28,7 @@ namespace EstateAccessManagement.Application.Tests
             {
                 Id = accessCodeId,
                 CodeType = AccessCodeType.LongStayVisitor,
-                CreatedAt = DateTime.UtcNow.ToString("f"),
+                ValidFrom = DateTime.UtcNow.ToString("f"),
                 IsActive = true,
                 MaxUses = null,
                 CurrentUses = 1

@@ -6,5 +6,6 @@
         public string Message { get; set; } = string.Empty;
         public Guid? ResidentId { get; set; }
         public Guid? AccessCodeId { get; set; }
+        public string? VerifiedBy { get; set; }
     }
 }

@@ -29,11 +29,11 @@ namespace EstateAccessManagement.Application.Features.AccessCodes.Commands
                 ResidentId = result.ResidentId,
                 Code = result.Code,
                 CodeType = result.CodeType,
+                ValidFrom = result.ValidFrom,
                 ExpiresAt = result.ExpiresAt,
                 MaxUses = result.MaxUses,
                 CurrentUses = result.CurrentUses,
-                IsActive = result.IsActive,
-                CreatedAt = result.CreatedAt
+                IsActive = result.IsActive
             };
         }
     }

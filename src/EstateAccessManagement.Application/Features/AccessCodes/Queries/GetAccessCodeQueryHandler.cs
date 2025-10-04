@@ -30,7 +30,7 @@ namespace EstateAccessManagement.Application.Features.AccessCodes.Queries
                 MaxUses = result.MaxUses,
                 CurrentUses = result.CurrentUses,
                 IsActive = result.IsActive,
-                CreatedAt = result.CreatedAt
+                ValidFrom = result.ValidFrom
             };
         }
     }
