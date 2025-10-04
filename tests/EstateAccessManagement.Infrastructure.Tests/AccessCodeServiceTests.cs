@@ -75,6 +75,7 @@ public class AccessCodeServiceTests
         var residentId = Guid.NewGuid();
         var rawCode = "EXPIREDCODE";
         var hashedCode = AccessCodeService.HashCode(rawCode);
+        var securityId = Guid.NewGuid();
         var accessCode = new AccessCode
         {
             Id = Guid.NewGuid(),
@@ -98,7 +99,7 @@ public class AccessCodeServiceTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync((byte[])null);
 
-        var result = await _accessCodeService.ValidateAccessCodeAsync(rawCode);
+        var result = await _accessCodeService.ValidateAccessCodeAsync(rawCode, securityId);
 
         Assert.False(result.IsValid);
         Assert.Equal("Access code invalid.", result.Message);
@@ -114,6 +115,7 @@ public class AccessCodeServiceTests
     {
         var residentId = Guid.NewGuid();
         var rawCode = "EXHAUSTEDCODE";
+        var securityId = Guid.NewGuid();
         var hashedCode = AccessCodeService.HashCode(rawCode);
         var accessCode = new AccessCode
         {
@@ -138,7 +140,7 @@ public class AccessCodeServiceTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync((byte[])null);
 
-        var result = await _accessCodeService.ValidateAccessCodeAsync(rawCode);
+        var result = await _accessCodeService.ValidateAccessCodeAsync(rawCode, securityId);
 
         Assert.False(result.IsValid);
         Assert.Equal("Access code has reached its maximum number of uses.", result.Message);
@@ -152,12 +154,13 @@ public class AccessCodeServiceTests
     [Fact]
     public async Task ValidateAccessCodeAsync_ShouldReturnFalse_ForNonexistentCode()
     {
+        var securityId = Guid.NewGuid();
         _cacheMock.Setup(c => c.GetAsync(
             It.IsAny<string>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync((byte[])null);
 
-        var result = await _accessCodeService.ValidateAccessCodeAsync("NONEXISTENT");
+        var result = await _accessCodeService.ValidateAccessCodeAsync("NONEXISTENT", securityId);
 
         Assert.False(result.IsValid);
         Assert.Equal("Access code invalid.", result.Message);
@@ -169,6 +172,7 @@ public class AccessCodeServiceTests
     public async Task ValidateAccessCodeAsync_ShouldReturnFalse_ForInactiveCode()
     {
         var rawCode = "INACTIVECODE";
+        var securityId = Guid.NewGuid();
         var hashedCode = AccessCodeService.HashCode(rawCode);
         var accessCode = new AccessCode
         {
@@ -193,7 +197,7 @@ public class AccessCodeServiceTests
             It.IsAny<CancellationToken>()))
             .ReturnsAsync((byte[])null);
 
-        var result = await _accessCodeService.ValidateAccessCodeAsync(rawCode);
+        var result = await _accessCodeService.ValidateAccessCodeAsync(rawCode, securityId);
 
         Assert.False(result.IsValid);
         Assert.Equal("Access code invalid.", result.Message);

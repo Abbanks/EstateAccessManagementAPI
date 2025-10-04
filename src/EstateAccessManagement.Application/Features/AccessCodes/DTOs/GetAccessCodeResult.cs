@@ -12,6 +12,6 @@ namespace EstateAccessManagement.Application.Features.AccessCodes.DTOs
         public int? MaxUses { get; set; }
         public int CurrentUses { get; set; }
         public bool IsActive { get; set; }
-        public string? CreatedAt { get; set; }
+        public string? ValidFrom { get; set; }
     }
 }

@@ -9,6 +9,7 @@ using EstateAccessManagement.Core.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -96,7 +97,7 @@ namespace EstateAccessManagement.Infrastructure.Services
                 ResidentEmail = residentInfo.Email,
                 AccessCode = rawCode,
                 CodeType = accessCode.CodeType.GetDescription(),
-                ExpiresAt = accessCode.ExpiresAt,
+                ExpiresAt = accessCode.ExpiresAt
             };
             string message = JsonSerializer.Serialize(notificationEvent);
             await messageQueueClient.PublishAsync("AccessCodeNotifications", message);
@@ -111,12 +112,13 @@ namespace EstateAccessManagement.Infrastructure.Services
                 MaxUses = accessCode.MaxUses,
                 CurrentUses = accessCode.CurrentUses,
                 IsActive = accessCode.IsActive,
-                CreatedAt = accessCode.CreatedAt.ToString("f"),
+                ValidFrom = accessCode.CreatedAt.ToString("f"),
             };
         }
 
-        public async Task<AccessCodeValidationResult> ValidateAccessCodeAsync(string code)
+        public async Task<AccessCodeValidationResult> ValidateAccessCodeAsync(string code, Guid securityId)
         {
+            var securityInfo = await userService.GetUserById(securityId);
             var codeHash = HashCode(code);
             var cacheKey = $"{AccessCodeCacheKeyPrefix}{codeHash}";
             var cachedData = await cache.GetStringAsync(cacheKey);
@@ -169,7 +171,8 @@ namespace EstateAccessManagement.Infrastructure.Services
                     IsValid = true,
                     Message = "Access code is valid.",
                     ResidentId = cachedCode.ResidentId,
-                    AccessCodeId = cachedCode.Id
+                    AccessCodeId = cachedCode.Id,
+                    VerifiedBy = $"{securityInfo.FirstName} {securityInfo.LastName}"
                 };
             }
 
@@ -200,7 +203,8 @@ namespace EstateAccessManagement.Infrastructure.Services
                     IsValid = false,
                     Message = "Access code has reached its maximum number of uses.",
                     ResidentId = accessCode.ResidentId,
-                    AccessCodeId = accessCode.Id
+                    AccessCodeId = accessCode.Id,
+                    VerifiedBy = $"{securityInfo.FirstName} {securityInfo.LastName}"
                 };
             }
 
@@ -233,7 +237,8 @@ namespace EstateAccessManagement.Infrastructure.Services
                 IsValid = true,
                 Message = "Access code is valid.",
                 ResidentId = accessCode.ResidentId,
-                AccessCodeId = accessCode.Id
+                AccessCodeId = accessCode.Id,
+                VerifiedBy = $"{securityInfo.FirstName} {securityInfo.LastName}"
             };
         }
 
@@ -256,7 +261,7 @@ namespace EstateAccessManagement.Infrastructure.Services
                 MaxUses = accessCode.MaxUses,
                 CurrentUses = accessCode.CurrentUses,
                 IsActive = accessCode.IsActive,
-                CreatedAt = accessCode.CreatedAt.ToString("f")
+                ValidFrom = accessCode.CreatedAt.ToString("f")
             };
         }
 
@@ -277,7 +282,7 @@ namespace EstateAccessManagement.Infrastructure.Services
                 MaxUses = ac.MaxUses,
                 CurrentUses = ac.CurrentUses,
                 IsActive = ac.IsActive,
-                CreatedAt = ac.CreatedAt.ToString("f"),
+                ValidFrom = ac.CreatedAt.ToString("f"),
             }).ToList();
         }
 
